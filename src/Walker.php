@@ -201,6 +201,9 @@ class Walker
                     }
                     break;
                 }
+            } elseif ($token === Commands::LABEL) {
+                self::_walk($tokens, $terminator, 1);
+                continue;
             } elseif ($token === Commands::STYLE) {
                 if ($tokens->valid()) {
                     $style = $tokens->current();

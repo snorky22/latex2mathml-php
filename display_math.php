@@ -15,27 +15,42 @@ if (empty($texFiles)) {
 $texFile = $texFiles[0];
 $content = file_get_contents($texFile);
 
-// 2. Extract math contents delimited by $$ or $
-// We use a regex that matches $$...$$ first to avoid matching $...$ inside it
+// 2. Extract math contents delimited by $$ or $ or LaTeX environments
+// We use a regex that matches $$...$$ and environments first to avoid matching $...$ inside them
 // Pattern explanation:
 // (\$\$.*?\$\$) matches double dollar expressions
-// (\$.*?\$) matches single dollar expressions
+// (\\begin\{(?:equation|eqnarray|multline|align|gather|flalign|alignat|split|aligned)\*?\} .*? \\end\{(?:\g<2>)\}) matches environments
+// (\$.*?\$ ) matches single dollar expressions
 // s modifier allows . to match newlines
-$pattern = '/(\$\$.*?\$\$|\$.*?\$)/s';
+$environments = [
+    'equation', 'equation*',
+    'eqnarray', 'eqnarray*',
+    'multline', 'multline*',
+    'align', 'align*',
+    'aligned', 'aligned*',
+    'gather', 'gather*',
+    'flalign', 'flalign*',
+    'alignat', 'alignat*',
+    'split',
+];
+$envList = implode('|', array_map('preg_quote', $environments));
+$pattern = '/(\$\$.*?\$\$|\\\\begin\{(' . $envList . ')\}.*?\\\\end\{\g<2>\}|\$.*?\$)/s';
 preg_match_all($pattern, $content, $matches);
 
 $expressions = $matches[0];
 $results = [];
 
 foreach ($expressions as $expr) {
-    $isDisplay = str_starts_with($expr, '$$');
-    // Remove delimiters
-    if ($isDisplay) {
+    if (str_starts_with($expr, '$$')) {
         $latex = trim(substr($expr, 2, -2));
         $display = 'block';
-    } else {
+    } elseif (str_starts_with($expr, '$')) {
         $latex = trim(substr($expr, 1, -1));
         $display = 'inline';
+    } else {
+        // It's a LaTeX environment
+        $latex = $expr;
+        $display = 'block';
     }
 
     try {

@@ -232,6 +232,7 @@ class Commands
     public const TEX = "\\TeX";
 
     public const SIDESET = "\\sideset";
+    public const LABEL = "\\label";
 
     public const SKEW = "\\skew";
     public const NOT = "\\not";

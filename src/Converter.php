@@ -264,7 +264,8 @@ class Converter
             $mrow = $dom->createElement("mrow");
             $parent->appendChild($mrow);
             $parent = $mrow;
-            $lbrace = $dom->createElement("mo", "&#x" . SymbolsParser::convert_symbol(Commands::LBRACE) . ";");
+            $lbrace = $dom->createElement("mo");
+            $lbrace->nodeValue = "&#x" . SymbolsParser::convert_symbol(Commands::LBRACE) . ";";
             $lbrace->setAttribute("stretchy", "true");
             $lbrace->setAttribute("fence", "true");
             $lbrace->setAttribute("form", "prefix");
@@ -460,7 +461,8 @@ class Converter
     {
         if (isset(Commands::$DIACRITICS[$command])) {
             [$text, $attributes] = Commands::$DIACRITICS[$command];
-            $element = $dom->createElement("mo", $text);
+            $element = $dom->createElement("mo");
+            $element->nodeValue = $text;
             foreach ($attributes as $k => $v) {
                 $element->setAttribute($k, $v);
             }
@@ -471,7 +473,8 @@ class Converter
     private static function _convert_and_append_command(string $command, DOMElement $parent, DOMDocument $dom, array $attributes = []): void
     {
         $code_point = SymbolsParser::convert_symbol($command);
-        $mo = $dom->createElement("mo", $code_point ? "&#x$code_point;" : $command);
+        $mo = $dom->createElement("mo");
+        $mo->nodeValue = $code_point ? "&#x$code_point;" : $command;
         foreach ($attributes as $k => $v) {
             $mo->setAttribute($k, $v);
         }
@@ -537,12 +540,14 @@ class Converter
         $symbol = SymbolsParser::convert_symbol($token);
 
         if (preg_match("/^\\d+(\\.\\d+)?$/", $token)) {
-            $element = $dom->createElement("mn", $token);
+            $element = $dom->createElement("mn");
+            $element->nodeValue = $token;
             foreach ($attributes as $k => $v) $element->setAttribute($k, $v);
             $parent->appendChild($element);
             self::_set_font($element, "mn", $font);
         } elseif (in_array($token, self::OPERATORS)) {
-            $element = $dom->createElement("mo", ($symbol === null) ? $token : "&#x$symbol;");
+            $element = $dom->createElement("mo");
+            $element->nodeValue = ($symbol === null) ? $token : "&#x$symbol;";
             foreach ($attributes as $k => $v) $element->setAttribute($k, $v);
             if ($token === "\\|") $element->setAttribute("fence", "false");
             if ($token === "\\smallint") $element->setAttribute("largeop", "false");
@@ -554,12 +559,14 @@ class Converter
             }
             $parent->appendChild($element);
         } elseif (($symbol && ( (hexdec($symbol) >= hexdec("2200") && hexdec($symbol) <= hexdec("22FF")) || (hexdec($symbol) >= hexdec("2190") && hexdec($symbol) <= hexdec("21FF")) )) || $symbol === ".") {
-            $element = $dom->createElement("mo", "&#x$symbol;");
+            $element = $dom->createElement("mo");
+            $element->nodeValue = "&#x$symbol;";
             foreach ($attributes as $k => $v) $element->setAttribute($k, $v);
             $parent->appendChild($element);
             self::_set_font($element, "mo", $font);
         } elseif (in_array($token, ["\\ ", "~", Commands::NOBREAKSPACE, Commands::SPACE])) {
-            $element = $dom->createElement("mtext", "&#x000A0;");
+            $element = $dom->createElement("mtext");
+            $element->nodeValue = "&#x000A0;";
             foreach ($attributes as $k => $v) $element->setAttribute($k, $v);
             $parent->appendChild($element);
             self::_set_font($element, "mtext", $font);
@@ -567,7 +574,8 @@ class Converter
             $mpadded = $dom->createElement("mpadded");
             $mpadded->setAttribute("width", "0");
             $parent->appendChild($mpadded);
-            $mtext = $dom->createElement("mtext", "&#x029F8;");
+            $mtext = $dom->createElement("mtext");
+            $mtext->nodeValue = "&#x029F8;";
             $mpadded->appendChild($mtext);
         } elseif (in_array($token, [Commands::DETERMINANT, Commands::GCD, Commands::INTOP, Commands::INJLIM, Commands::LIMINF, Commands::LIMSUP, Commands::PR, Commands::PROJLIM])) {
             $element = $dom->createElement("mo");
@@ -588,7 +596,8 @@ class Converter
             foreach ($attributes as $k => $v) $mrow->setAttribute($k, $v);
             $parent->appendChild($mrow);
             foreach (["&#x0222B;", "&#x022EF;", "&#x0222B;"] as $s) {
-                $mo = $dom->createElement("mo", $s);
+                $mo = $dom->createElement("mo");
+                $mo->nodeValue = $s;
                 $mrow->appendChild($mo);
             }
         } elseif (in_array($token, [Commands::LATEX, Commands::TEX])) {
@@ -596,7 +605,8 @@ class Converter
             foreach ($attributes as $k => $v) $mrow->setAttribute($k, $v);
             $parent->appendChild($mrow);
             if ($token === Commands::LATEX) {
-                $mi_l = $dom->createElement("mi", "L");
+                $mi_l = $dom->createElement("mi");
+                $mi_l->nodeValue = "L";
                 $mrow->appendChild($mi_l);
                 $mspace = $dom->createElement("mspace");
                 $mspace->setAttribute("width", "-.325em");
@@ -612,7 +622,8 @@ class Converter
                 $mpadded->appendChild($mstyle);
                 $mrow_inner = $dom->createElement("mrow");
                 $mstyle->appendChild($mrow_inner);
-                $mi_a = $dom->createElement("mi", "A");
+                $mi_a = $dom->createElement("mi");
+                $mi_a->nodeValue = "A";
                 $mrow_inner->appendChild($mi_a);
                 $mspace2 = $dom->createElement("mspace");
                 $mspace2->setAttribute("width", "-.17em");
@@ -620,7 +631,8 @@ class Converter
                 self::_set_font($mi_l, "mi", $font);
                 self::_set_font($mi_a, "mi", $font);
             }
-            $mi_t = $dom->createElement("mi", "T");
+            $mi_t = $dom->createElement("mi");
+            $mi_t->nodeValue = "T";
             $mrow->appendChild($mi_t);
             $mspace3 = $dom->createElement("mspace");
             $mspace3->setAttribute("width", "-.14em");
@@ -632,19 +644,22 @@ class Converter
             $mrow->appendChild($mpadded2);
             $mrow_e = $dom->createElement("mrow");
             $mpadded2->appendChild($mrow_e);
-            $mi_e = $dom->createElement("mi", "E");
+            $mi_e = $dom->createElement("mi");
+            $mi_e->nodeValue = "E";
             $mrow_e->appendChild($mi_e);
             $mspace4 = $dom->createElement("mspace");
             $mspace4->setAttribute("width", "-.115em");
             $mrow->appendChild($mspace4);
-            $mi_x = $dom->createElement("mi", "X");
+            $mi_x = $dom->createElement("mi");
+            $mi_x->nodeValue = "X";
             $mrow->appendChild($mi_x);
             self::_set_font($mi_t, "mi", $font);
             self::_set_font($mi_e, "mi", $font);
             self::_set_font($mi_x, "mi", $font);
         } elseif (str_starts_with($token, Commands::OPERATORNAME)) {
             $name = substr($token, 14, -1);
-            $element = $dom->createElement("mo", $name);
+            $element = $dom->createElement("mo");
+            $element->textContent = $name;
             foreach ($attributes as $k => $v) $element->setAttribute($k, $v);
             $parent->appendChild($element);
         } elseif (str_starts_with($token, Commands::BACKSLASH)) {
@@ -660,7 +675,8 @@ class Converter
             $parent->appendChild($element);
             self::_set_font($element, "mi", $font);
         } else {
-            $element = $dom->createElement("mi", $token);
+            $element = $dom->createElement("mi");
+            $element->textContent = $token;
             foreach ($attributes as $k => $v) $element->setAttribute($k, $v);
             $parent->appendChild($element);
             self::_set_font($element, "mi", $font);
