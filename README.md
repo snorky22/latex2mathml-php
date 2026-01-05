@@ -12,7 +12,7 @@ Pure PHP 8.4 library for LaTeX to MathML conversion. This is a port of the Pytho
 ## Installation
 
 ```bash
-composer require latex2mathml/latex2mathml
+composer require latex2mathml/latex2mathml-php
 ```
 
 ## Usage
