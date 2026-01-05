@@ -402,6 +402,8 @@ class Converter
                     $mtx_alignment = "l";
                 } elseif (in_array($command, [Commands::SPLIT, Commands::ALIGN])) {
                     $mtx_alignment = "rl";
+                } elseif (in_array($command, [Commands::EQNARRAY, Commands::EQNARRAY_STAR])) {
+                    $mtx_alignment = "rcl";
                 }
                 self::_convert_matrix($node->children, $_parent, $command, $dom, $mtx_alignment);
             } elseif ($command === Commands::CFRAC) {

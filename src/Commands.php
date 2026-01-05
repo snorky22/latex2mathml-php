@@ -146,6 +146,8 @@ class Commands
     public const SUBSTACK = "\\substack";
     public const SPLIT = "\\split";
     public const ALIGN = "\\align*";
+    public const EQNARRAY = "\\eqnarray";
+    public const EQNARRAY_STAR = "\\eqnarray*";
     public const MATRICES = [
         "\\matrix",
         "\\matrix*",
@@ -166,6 +168,8 @@ class Commands
         self::SMALLMATRIX,
         self::SPLIT,
         self::ALIGN,
+        self::EQNARRAY,
+        self::EQNARRAY_STAR,
     ];
 
     public const BACKSLASH = "\\";
@@ -389,6 +393,8 @@ class Commands
                 self::SMALLMATRIX => ["mtable", ["rowspacing" => "0.1em", "columnspacing" => "0.2778em"]],
                 self::SPLIT => ["mtable", ["displaystyle" => "true", "columnspacing" => "0em", "rowspacing" => "3pt"]],
                 self::ALIGN => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
+                self::EQNARRAY => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
+                self::EQNARRAY_STAR => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
                 self::SUBSCRIPT => ["msub", []],
                 self::SUPERSCRIPT => ["msup", []],
                 self::SUBSUP => ["msubsup", []],
