@@ -51,81 +51,107 @@ class Converter
 
     private static function _convert_matrix(array $nodes, DOMElement $parent, string $command, DOMDocument $dom, ?string $alignment = null): void
     {
-        $row = null;
-        $cell = null;
-        $col_index = 0;
-        $col_alignment = null;
-        $max_col_size = 0;
-        $row_index = 0;
-        $row_lines = [];
+        $rows = [];
+        $currentRow = [];
         $hfil_indexes = [];
+        $row_hfil_indexes = [];
+
+        $col_index = 0;
+        $max_col_size = 0;
+        $row_lines = [];
 
         foreach ($nodes as $node) {
-            if ($row === null) {
-                $row = $dom->createElement("mtr");
-                $parent->appendChild($row);
-            }
-
-            if ($cell === null) {
-                [$col_alignment, $col_index] = self::_get_column_alignment($alignment, $col_alignment, $col_index);
-                $cell = self::_make_matrix_cell($row, $col_alignment, $dom);
-            }
-
             if ($node->token === Commands::BRACES) {
-                self::_convert_group([$node], $cell, $dom);
+                $currentRow[] = [$node];
+                $row_hfil_indexes[] = [false];
             } elseif ($node->token === "&") {
-                self::_set_cell_alignment($cell, $hfil_indexes);
-                $hfil_indexes = [];
-                [$col_alignment, $col_index] = self::_get_column_alignment($alignment, $col_alignment, $col_index);
-                $cell = self::_make_matrix_cell($row, $col_alignment, $dom);
-                if (in_array($command, [Commands::SPLIT, Commands::ALIGN]) && $col_index % 2 === 0) {
-                    $cell->appendChild($dom->createElement("mi"));
+                $col_index++;
+                if (!isset($currentRow[$col_index])) {
+                    $currentRow[$col_index] = [];
+                    $row_hfil_indexes[$col_index] = [];
                 }
-            } elseif ($node->token === Commands::DOUBLEBACKSLASH || $node->token === Commands::CARRIAGE_RETURN) {
-                self::_set_cell_alignment($cell, $hfil_indexes);
-                $hfil_indexes = [];
-                $row_index++;
-                if ($col_index > $max_col_size) {
-                    $max_col_size = $col_index;
-                }
+            } elseif ($node->token === Commands::DOUBLEBACKSLASH || $node->token === Commands::CARRIAGE_RETURN || $node->token === '\\\\') {
+                $rows[] = [$currentRow, $row_hfil_indexes];
+                if ($col_index + 1 > $max_col_size) $max_col_size = $col_index + 1;
+                $currentRow = [];
+                $row_hfil_indexes = [];
                 $col_index = 0;
-                [$col_alignment, $col_index] = self::_get_column_alignment($alignment, $col_alignment, $col_index);
-                $row = $dom->createElement("mtr");
-                $parent->appendChild($row);
-                $cell = self::_make_matrix_cell($row, $col_alignment, $dom);
             } elseif ($node->token === Commands::HLINE) {
                 $row_lines[] = "solid";
             } elseif ($node->token === Commands::HDASHLINE) {
                 $row_lines[] = "dashed";
             } elseif ($node->token === Commands::HFIL) {
-                $hfil_indexes[] = true;
+                if (!isset($row_hfil_indexes[$col_index])) $row_hfil_indexes[$col_index] = [];
+                $row_hfil_indexes[$col_index][] = true;
             } else {
-                if ($row_index > count($row_lines)) {
-                    $row_lines[] = "none";
-                }
-                $hfil_indexes[] = false;
-                self::_convert_group([$node], $cell, $dom);
+                if (!isset($currentRow[$col_index])) $currentRow[$col_index] = [];
+                if (!isset($row_hfil_indexes[$col_index])) $row_hfil_indexes[$col_index] = [];
+                $currentRow[$col_index][] = $node;
+                $row_hfil_indexes[$col_index][] = false;
             }
         }
-
-        if ($col_index > $max_col_size) {
-            $max_col_size = $col_index;
+        if (!empty($currentRow)) {
+            $rows[] = [$currentRow, $row_hfil_indexes];
+            if ($col_index + 1 > $max_col_size) $max_col_size = $col_index + 1;
         }
 
         if (in_array("solid", $row_lines)) {
             $parent->setAttribute("rowlines", implode(" ", $row_lines));
         }
 
-        if ($row !== null && $cell !== null && $cell->childNodes->length === 0) {
-            // Check if row is empty and remove it? Python code: if row is not None and cell is not None and len(cell) == 0: parent.remove(row)
-            // But we might have multiple cells. Python's walker seems to put everything in the last cell.
-            // Let's follow Python's logic.
-            if ($row->childNodes->length === 1 && $row->firstChild === $cell && $cell->childNodes->length === 0) {
-                 $parent->removeChild($row);
+        foreach ($rows as $idx => [$rowNodes, $rowHfils]) {
+            $mtr = $dom->createElement("mtr");
+            $parent->appendChild($mtr);
+
+            for ($i = 0; $i < $max_col_size; $i++) {
+                $col_alignment = null;
+                if ($alignment) {
+                    $char = $alignment[$i] ?? $alignment[$i % strlen($alignment)];
+                    $col_alignment = self::COLUMN_ALIGNMENT_MAP[$char] ?? null;
+                }
+
+                // Special alignment for multline
+                if ($command === Commands::MULTLINE || $command === Commands::MULTLINE_STAR) {
+                    if ($idx === 0) {
+                        $col_alignment = "left";
+                    } elseif ($idx === count($rows) - 1) {
+                        $col_alignment = "right";
+                    } else {
+                        $col_alignment = "center";
+                    }
+                }
+
+                $mtd = $dom->createElement("mtd");
+                if ($col_alignment) {
+                    $mtd->setAttribute("columnalign", $col_alignment);
+                }
+
+                // Check hfil alignment
+                if (isset($rowHfils[$i])) {
+                    $hfils = $rowHfils[$i];
+                    if (!empty($hfils) && in_array(true, $hfils, true) && count($hfils) > 1) {
+                        if ($hfils[0] && !$hfils[count($hfils) - 1]) {
+                            $mtd->setAttribute("columnalign", "right");
+                        } elseif (!$hfils[0] && $hfils[count($hfils) - 1]) {
+                            $mtd->setAttribute("columnalign", "left");
+                        }
+                    }
+                }
+
+                $mtr->appendChild($mtd);
+
+                // Empty mi injection for align-like environments
+                if (in_array($command, [Commands::SPLIT, Commands::ALIGN, Commands::ALIGN_STAR, Commands::ALIGNED, Commands::ALIGNED_STAR, Commands::FLALIGN, Commands::FLALIGN_STAR, Commands::ALIGNAT, Commands::ALIGNAT_STAR, Commands::ALIGNEDAT, Commands::ALIGNEDAT_STAR]) && ($i + 1) % 2 === 0) {
+                    $mtd->appendChild($dom->createElement("mi"));
+                }
+
+                if (isset($rowNodes[$i])) {
+                    self::_convert_group($rowNodes[$i], $mtd, $dom);
+                }
             }
         }
 
-        if ($max_col_size && $command === Commands::ALIGN) {
+        if ($max_col_size && in_array($command, [Commands::ALIGN, Commands::ALIGN_STAR, Commands::ALIGNED, Commands::ALIGNED_STAR, Commands::FLALIGN, Commands::FLALIGN_STAR, Commands::ALIGNAT, Commands::ALIGNAT_STAR, Commands::ALIGNEDAT, Commands::ALIGNEDAT_STAR])) {
             $spacing = ["0em", "2em"];
             $multiplier = (int)($max_col_size / count($spacing));
             $combined_spacing = [];
@@ -400,7 +426,7 @@ class Converter
                 $mtx_alignment = $alignment;
                 if ($command === Commands::CASES) {
                     $mtx_alignment = "l";
-                } elseif (in_array($command, [Commands::SPLIT, Commands::ALIGN])) {
+                } elseif (in_array($command, [Commands::SPLIT, Commands::ALIGN, Commands::ALIGN_STAR, Commands::ALIGNED, Commands::ALIGNED_STAR, Commands::FLALIGN, Commands::FLALIGN_STAR, Commands::ALIGNAT, Commands::ALIGNAT_STAR, Commands::ALIGNEDAT, Commands::ALIGNEDAT_STAR])) {
                     $mtx_alignment = "rl";
                 } elseif (in_array($command, [Commands::EQNARRAY, Commands::EQNARRAY_STAR])) {
                     $mtx_alignment = "rcl";

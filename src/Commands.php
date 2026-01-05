@@ -145,7 +145,24 @@ class Commands
     public const SMALLMATRIX = "\\smallmatrix";
     public const SUBSTACK = "\\substack";
     public const SPLIT = "\\split";
-    public const ALIGN = "\\align*";
+    public const ALIGN = "\\align";
+    public const ALIGN_STAR = "\\align*";
+    public const EQUATION = "\\equation";
+    public const EQUATION_STAR = "\\equation*";
+    public const GATHER = "\\gather";
+    public const GATHER_STAR = "\\gather*";
+    public const MULTLINE = "\\multline";
+    public const MULTLINE_STAR = "\\multline*";
+    public const FLALIGN = "\\flalign";
+    public const FLALIGN_STAR = "\\flalign*";
+    public const ALIGNAT = "\\alignat";
+    public const ALIGNAT_STAR = "\\alignat*";
+    public const ALIGNED = "\\aligned";
+    public const ALIGNED_STAR = "\\aligned*";
+    public const ALIGNEDAT = "\\alignedat";
+    public const ALIGNEDAT_STAR = "\\alignedat*";
+    public const GATHERED = "\\gathered";
+    public const SUBEQUATIONS = "\\subequations";
     public const EQNARRAY = "\\eqnarray";
     public const EQNARRAY_STAR = "\\eqnarray*";
     public const MATRICES = [
@@ -168,6 +185,21 @@ class Commands
         self::SMALLMATRIX,
         self::SPLIT,
         self::ALIGN,
+        self::ALIGN_STAR,
+        self::GATHER,
+        self::GATHER_STAR,
+        self::MULTLINE,
+        self::MULTLINE_STAR,
+        self::FLALIGN,
+        self::FLALIGN_STAR,
+        self::ALIGNAT,
+        self::ALIGNAT_STAR,
+        self::ALIGNED,
+        self::ALIGNED_STAR,
+        self::ALIGNEDAT,
+        self::ALIGNEDAT_STAR,
+        self::GATHERED,
+        self::SUBEQUATIONS,
         self::EQNARRAY,
         self::EQNARRAY_STAR,
     ];
@@ -237,6 +269,9 @@ class Commands
 
     public const SIDESET = "\\sideset";
     public const LABEL = "\\label";
+    public const TAG = "\\tag";
+    public const NOTAG = "\\notag";
+    public const NONUMBER = "\\nonumber";
 
     public const SKEW = "\\skew";
     public const NOT = "\\not";
@@ -393,6 +428,23 @@ class Commands
                 self::SMALLMATRIX => ["mtable", ["rowspacing" => "0.1em", "columnspacing" => "0.2778em"]],
                 self::SPLIT => ["mtable", ["displaystyle" => "true", "columnspacing" => "0em", "rowspacing" => "3pt"]],
                 self::ALIGN => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
+                self::ALIGN_STAR => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
+                self::ALIGNED => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
+                self::ALIGNED_STAR => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
+                self::GATHER => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
+                self::GATHER_STAR => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
+                self::MULTLINE => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
+                self::MULTLINE_STAR => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
+                self::FLALIGN => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
+                self::FLALIGN_STAR => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
+                self::ALIGNAT => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
+                self::ALIGNAT_STAR => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
+                self::ALIGNEDAT => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
+                self::ALIGNEDAT_STAR => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
+                self::EQUATION => ["mrow", ["displaystyle" => "true"]],
+                self::EQUATION_STAR => ["mrow", ["displaystyle" => "true"]],
+                self::SUBEQUATIONS => ["mrow", []],
+                self::GATHERED => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
                 self::EQNARRAY => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
                 self::EQNARRAY_STAR => ["mtable", ["displaystyle" => "true", "rowspacing" => "3pt"]],
                 self::SUBSCRIPT => ["msub", []],

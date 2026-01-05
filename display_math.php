@@ -34,7 +34,7 @@ $environments = [
     'split',
 ];
 $envList = implode('|', array_map('preg_quote', $environments));
-$pattern = '/(\$\$.*?\$\$|\\\\begin\{(' . $envList . ')\}.*?\\\\end\{\g<2>\}|\$.*?\$)/s';
+$pattern = '/(\$\$.*?\$\$|\\\\begin\{(?<env>' . $envList . ')\}.*?\\\\end\{(?P=env)\}|\$.*?\$)/s';
 preg_match_all($pattern, $content, $matches);
 
 $expressions = $matches[0];
@@ -62,7 +62,7 @@ foreach ($expressions as $expr) {
     } catch (\Exception $e) {
         $results[] = [
             'latex' => $expr,
-            'error' => $e->getMessage()
+            'error' => $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine()
         ];
     }
 }

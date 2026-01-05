@@ -201,8 +201,10 @@ class Walker
                     }
                     break;
                 }
-            } elseif ($token === Commands::LABEL) {
+            } elseif ($token === Commands::LABEL || $token === Commands::TAG) {
                 self::_walk($tokens, $terminator, 1);
+                continue;
+            } elseif ($token === Commands::NOTAG || $token === Commands::NONUMBER) {
                 continue;
             } elseif ($token === Commands::STYLE) {
                 if ($tokens->valid()) {
@@ -403,7 +405,7 @@ class Walker
                 }
                 $node = new Node(token: $token, children: [$child], attributes: ["width" => sprintf("%.3fem", 0.0555 * (int)$width)]);
             } elseif (str_starts_with($token, Commands::BEGIN)) {
-                $node = self::_get_environment_node($token, $tokens);
+                $node = self::_get_environment_node($token, $tokens, $terminator);
             } else {
                 $node = new Node(token: $token);
             }
@@ -457,11 +459,17 @@ class Walker
         };
     }
 
-    private static function _get_environment_node(string $token, \Iterator $tokens): Node
+    private static function _get_environment_node(string $token, \Iterator $tokens, ?string $terminator_context = null): Node
     {
         $start = strpos($token, "{") + 1;
         $environment = substr($token, $start, -1);
         $terminator = Commands::END . "{" . $environment . "}";
+
+        if ($environment === 'alignat' || $environment === 'alignat*' || $environment === 'alignedat' || $environment === 'alignedat*') {
+            // These environments have a mandatory argument for the number of pairs
+            self::_walk($tokens, $terminator_context, 1);
+        }
+
         $children = self::_walk($tokens, $terminator);
         if (!empty($children) && end($children)->token !== $terminator) {
             throw new MissingEndError();
