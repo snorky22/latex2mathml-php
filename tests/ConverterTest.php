@@ -1,37 +1,44 @@
 <?php
 
+namespace Latex2MathML\Tests;
+
 use PHPUnit\Framework\TestCase;
 use Latex2MathML\Converter;
 
 class ConverterTest extends TestCase
 {
-    public function test_simple_conversion()
+    /**
+     * @dataProvider conversionProvider
+     */
+    public function testConvert(string $latex, array $expected_substrings)
     {
-        $latex = 'a + b = c';
         $mathml = Converter::convert($latex);
-        $this->assertStringContainsString('<mi>a</mi>', $mathml);
-        $this->assertStringContainsString('<mo>+</mo>', $mathml);
-        $this->assertStringContainsString('<mi>b</mi>', $mathml);
-        $this->assertStringContainsString('<mo>=</mo>', $mathml);
-        $this->assertStringContainsString('<mi>c</mi>', $mathml);
+        foreach ($expected_substrings as $substring) {
+            $this->assertStringContainsString($substring, $mathml);
+        }
     }
 
-    public function test_fraction()
+    public static function conversionProvider(): array
     {
-        $latex = '\frac{1}{2}';
-        $mathml = Converter::convert($latex);
-        $this->assertStringContainsString('<mfrac>', $mathml);
-        $this->assertStringContainsString('<mn>1</mn>', $mathml);
-        $this->assertStringContainsString('<mn>2</mn>', $mathml);
-    }
-    
-    public function test_complex()
-    {
-        $latex = 'x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}';
-        $mathml = Converter::convert($latex);
-        $this->assertStringContainsString('<mi>x</mi>', $mathml);
-        $this->assertStringContainsString('<mfrac>', $mathml);
-        $this->assertStringContainsString('<msqrt>', $mathml);
-        $this->assertStringContainsString('<msup>', $mathml);
+        return [
+            'single-identifier' => ['x', ['<mi>x</mi>']],
+            'multiple-identifier' => ['xyz', ['<mi>x</mi>', '<mi>y</mi>', '<mi>z</mi>']],
+            'single-number' => ['3', ['<mn>3</mn>']],
+            'decimal-numbers' => ['12.34', ['<mn>12.34</mn>']],
+            'single-operator' => ['+', ['<mo>+</mo>']],
+            'over' => ['1 \over 2', ['<mfrac>', '<mn>1</mn>', '<mn>2</mn>']],
+            'matrix' => [
+                '\begin{matrix}a & b \\\\ c & d \end{matrix}',
+                ['<mtable>', '<mtr>', '<mtd><mi>a</mi></mtd>', '<mtd><mi>b</mi></mtd>', '<mtd><mi>c</mi></mtd>', '<mtd><mi>d</mi></mtd>']
+            ],
+            'quadratic' => [
+                'x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}',
+                ['<mi>x</mi>', '<mo>=</mo>', '<mfrac>', '<msqrt>', '<msup>', '<mi>b</mi>', '<mn>2</mn>']
+            ],
+            'limit' => [
+                '\lim_{x \to \infty} f(x)',
+                ['<msub>', '<mo>lim</mo>', '<mi>x</mi>', '→', '∞']
+            ]
+        ];
     }
 }

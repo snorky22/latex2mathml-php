@@ -16,7 +16,16 @@ class Tokenizer
         $tokens = [];
         foreach ($matches as $match) {
             // match[0] is the full match, match[1..N] are groups
-            $filtered_groups = array_values(array_filter(array_slice($match, 1), fn($v) => $v !== ''));
+            $filtered_groups = [];
+            foreach (array_slice($match, 1) as $k => $v) {
+                if ($v !== '') {
+                    $filtered_groups[] = $v;
+                } elseif ($k === 11 && str_contains($match[0], '{')) {
+                    if (preg_match('/^\\\\(?:color|fbox|hbox|href|mbox|style|text|textbf|textit|textrm|textsf|texttt)/', $match[0])) {
+                        $filtered_groups[] = '';
+                    }
+                }
+            }
             
             if (empty($filtered_groups)) continue;
 
