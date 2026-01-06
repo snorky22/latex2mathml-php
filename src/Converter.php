@@ -22,15 +22,32 @@ class Converter
     ];
     public const MATH_MODE_PATTERN = "/\\\\\\$|\\$|\\\\?[^\\\\$]+/";
 
-    public static function convert(string $latex, string $xmlns = "http://www.w3.org/1998/Math/MathML", string $display = "inline"): string
+    /**
+     * Converts a LaTeX string to a MathML string.
+     *
+     * @param string $latex The LaTeX expression to convert.
+     * @param string $display The display mode: "inline" (default) or "block".
+     * @param string $xmlns The XML namespace for the <math> element.
+     * @return string The resulting MathML string.
+     */
+    public static function convert(string $latex, string $display = "inline", string $xmlns = "http://www.w3.org/1998/Math/MathML"): string
     {
         $dom = new DOMDocument();
-        $math = self::convert_to_element($latex, $dom, $xmlns, $display);
+        $math = self::convert_to_element($latex, $dom, $display, $xmlns);
         $dom->appendChild($math);
         return self::_convert($dom);
     }
 
-    public static function convert_to_element(string $latex, DOMDocument $dom, string $xmlns = "http://www.w3.org/1998/Math/MathML", string $display = "inline"): DOMElement
+    /**
+     * Converts a LaTeX string to a MathML DOMElement.
+     *
+     * @param string $latex The LaTeX expression to convert.
+     * @param DOMDocument $dom The DOMDocument instance to use for creating the element.
+     * @param string $display The display mode: "inline" (default) or "block".
+     * @param string $xmlns The XML namespace for the <math> element.
+     * @return DOMElement The resulting <math> element.
+     */
+    public static function convert_to_element(string $latex, DOMDocument $dom, string $display = "inline", string $xmlns = "http://www.w3.org/1998/Math/MathML"): DOMElement
     {
         if (empty($xmlns)) {
             $math = $dom->createElement("math");

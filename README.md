@@ -19,24 +19,50 @@ composer require latex2mathml/latex2mathml-php
 
 ### Simple conversion
 
+By default, the converter produces inline MathML.
+
 ```php
 use Latex2MathML\Converter;
 
 $latex = 'a^2 + b^2 = c^2';
 $mathml = Converter::convert($latex);
 echo $mathml;
+// <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline">...</math>
 ```
 
-### Block display
+### Display Mode
+
+You can specify the display mode (`inline` or `block`) as the second argument.
 
 ```php
+// Positional argument
+$mathml = Converter::convert($latex, 'block');
+
+// Named argument (PHP 8.0+)
 $mathml = Converter::convert($latex, display: 'block');
 ```
 
 ### Custom XML namespace
 
+The third argument allows you to specify a custom XML namespace. It defaults to the standard MathML namespace (`http://www.w3.org/1998/Math/MathML`). Pass an empty string if you don't want a namespace attribute.
+
 ```php
+// Positional arguments
+$mathml = Converter::convert($latex, 'inline', 'http://custom-namespace.org');
+
+// Named argument
 $mathml = Converter::convert($latex, xmlns: 'http://custom-namespace.org');
+```
+
+### Integration with DOMDocument
+
+If you are already working with a `DOMDocument`, you can use `convert_to_element` to get a `DOMElement` instead of a string.
+
+```php
+$dom = new DOMDocument();
+$mathElement = Converter::convert_to_element($latex, $dom, display: 'block');
+$dom->appendChild($mathElement);
+echo $dom->saveXML();
 ```
 
 ## Visualization Script

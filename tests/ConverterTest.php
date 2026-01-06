@@ -41,4 +41,11 @@ class ConverterTest extends TestCase
             ]
         ];
     }
+
+    public function testPositionalDisplay()
+    {
+        $mathml = Converter::convert('x', 'block');
+        $this->assertStringContainsString('display="block"', $mathml);
+        $this->assertStringContainsString('xmlns="http://www.w3.org/1998/Math/MathML"', $mathml);
+    }
 }
