@@ -32,7 +32,11 @@ class Converter
 
     public static function convert_to_element(string $latex, DOMDocument $dom, string $xmlns = "http://www.w3.org/1998/Math/MathML", string $display = "inline"): DOMElement
     {
-        $math = $dom->createElementNS($xmlns, "math");
+        if (empty($xmlns)) {
+            $math = $dom->createElement("math");
+        } else {
+            $math = $dom->createElementNS($xmlns, "math");
+        }
         $math->setAttribute("display", $display);
         $row = $dom->createElement("mrow");
         $math->appendChild($row);
