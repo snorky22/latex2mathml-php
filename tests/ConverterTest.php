@@ -38,6 +38,22 @@ class ConverterTest extends TestCase
             'limit' => [
                 '\lim_{x \to \infty} f(x)',
                 ['<msub>', '<mo>lim</mo>', '<mi>x</mi>', '→', '∞']
+            ],
+            'integral-limits' => [
+                '\int_a^b x dx',
+                ['<msubsup>', '<mo>∫</mo>', '<mi>a</mi>', '<mi>b</mi>']
+            ],
+            'sum-limits' => [
+                '\sum_{i=0}^n i',
+                ['<msubsup>', '<mo>∑</mo>', '<mrow><mi>i</mi><mo>=</mo><mn>0</mn></mrow>', '<mi>n</mi>']
+            ],
+            'sum-limits-display' => [
+                '\sum\limits_{i=0}^n i',
+                ['<munderover>', '<mo>∑</mo>', '<mrow><mi>i</mi><mo>=</mo><mn>0</mn></mrow>', '<mi>n</mi>']
+            ],
+            'bigcap-limits' => [
+                '\bigcap_A^B',
+                ['<msubsup>', '<mo>⋂</mo>', '<mi>A</mi>', '<mi>B</mi>']
             ]
         ];
     }

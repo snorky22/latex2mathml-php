@@ -221,6 +221,7 @@ class Converter
         while ($iterator->valid()) {
             $node = $iterator->current();
             $token = $node->token;
+            $is_big_operator = self::_is_big_operator($node);
 
             if (isset(Commands::$MSTYLE_SIZES[$token]) || isset(Commands::$STYLES[$token])) {
                 $children = [];
@@ -233,7 +234,37 @@ class Converter
                 self::_convert_command($newNode, $parent, $dom, $_font);
                 break;
             } elseif (isset(Commands::$CONVERSION_MAP[$token]) || $token === Commands::MOD || $token === Commands::PMOD) {
-                self::_convert_command($node, $parent, $dom, $_font);
+                if ($token === Commands::SUBSUP && $node->children !== null && count($node->children) >= 3) {
+                    $tag = "msubsup";
+                    if (in_array($node->modifier, [Commands::LIMITS, Commands::OVERBRACE, Commands::UNDERBRACE]) || $node->children[0]->token === Commands::GCD) {
+                        $tag = "munderover";
+                    }
+                    $element = $dom->createElement($tag);
+                    $parent->appendChild($element);
+                    self::_convert_group([$node->children[0]], $element, $dom, $_font);
+                    self::_convert_group([$node->children[1]], $element, $dom, $_font);
+                    self::_convert_group([$node->children[2]], $element, $dom, $_font);
+                } elseif ($token === Commands::SUBSCRIPT && $node->children !== null && count($node->children) >= 2) {
+                    $tag = "msub";
+                    if (in_array($node->modifier, [Commands::LIMITS, Commands::UNDERBRACE])) {
+                        $tag = "munder";
+                    }
+                    $element = $dom->createElement($tag);
+                    $parent->appendChild($element);
+                    self::_convert_group([$node->children[0]], $element, $dom, $_font);
+                    self::_convert_group([$node->children[1]], $element, $dom, $_font);
+                } elseif ($token === Commands::SUPERSCRIPT && $node->children !== null && count($node->children) >= 2) {
+                    $tag = "msup";
+                    if (in_array($node->modifier, [Commands::LIMITS, Commands::OVERBRACE])) {
+                        $tag = "mover";
+                    }
+                    $element = $dom->createElement($tag);
+                    $parent->appendChild($element);
+                    self::_convert_group([$node->children[0]], $element, $dom, $_font);
+                    self::_convert_group([$node->children[1]], $element, $dom, $_font);
+                } else {
+                    self::_convert_command($node, $parent, $dom, $_font);
+                }
             } elseif (isset(Commands::$LOCAL_FONTS[$token]) && $node->children !== null) {
                 self::_convert_group($node->children, $parent, $dom, Commands::$LOCAL_FONTS[$token]);
             } elseif (str_starts_with($token, Commands::MATH) && $node->children !== null) {
@@ -251,8 +282,53 @@ class Converter
                 $parent->appendChild($mrow);
                 self::_convert_group($node->children, $mrow, $dom, $_font);
             }
+
+            if ($is_big_operator) {
+                $remaining = [];
+                $iterator->next();
+                while ($iterator->valid()) {
+                    $remaining[] = $iterator->current();
+                    $iterator->next();
+                }
+                if (!empty($remaining)) {
+                    $mrow = $dom->createElement("mrow");
+                    $parent->appendChild($mrow);
+                    self::_convert_group($remaining, $mrow, $dom, $_font);
+                }
+                break;
+            }
+
             $iterator->next();
         }
+    }
+
+    private static function _is_big_operator(Node $node): bool
+    {
+        $token = $node->token;
+        if ($token === Commands::INTEGRAL || $token === Commands::INTOP || $token === Commands::IDOTSINT) {
+            return true;
+        }
+        if (in_array($token, [Commands::SUBSCRIPT, Commands::SUPERSCRIPT, Commands::SUBSUP]) && $node->children !== null) {
+            return self::_is_big_operator($node->children[0]);
+        }
+        $symbol = SymbolsParser::convert_symbol($token);
+        if ($symbol) {
+            $code = hexdec($symbol);
+            return ($code >= 0x222B && $code <= 0x2233) // integrals
+                || $code === 0x2211 // \sum
+                || $code === 0x220F // \prod
+                || $code === 0x2210 // \coprod
+                || $code === 0x22C0 // \bigwedge
+                || $code === 0x22C1 // \bigvee
+                || $code === 0x22C2 // \bigcap
+                || $code === 0x22C3 // \bigcup
+                || $code === 0x2295 // \bigoplus
+                || $code === 0x2297 // \bigotimes
+                || $code === 0x2299 // \bigodot
+                || $code === 0x2294 // \bigsqcup
+                || $code === 0x228E; // \biguplus
+        }
+        return false;
     }
 
     private static function _get_alignment_and_column_lines(?string $alignment = null): array
