@@ -32,26 +32,26 @@ echo $mathml;
 
 ### Display Mode
 
-You can specify the display mode (`inline` or `block`) as the second argument.
+You can specify the display mode (`inline` or `block`) as the second argument. For clarity and to ensure future compatibility, **using named arguments (PHP 8.0+) is recommended**.
 
 ```php
-// Positional argument
-$mathml = Converter::convert($latex, 'block');
-
-// Named argument (PHP 8.0+)
+// Recommended: Named argument (PHP 8.0+)
 $mathml = Converter::convert($latex, display: 'block');
+
+// Also possible: Positional argument
+$mathml = Converter::convert($latex, 'block');
 ```
 
 ### Custom XML namespace
 
-The third argument allows you to specify a custom XML namespace. It defaults to the standard MathML namespace (`http://www.w3.org/1998/Math/MathML`). Pass an empty string if you don't want a namespace attribute.
+The third argument allows you to specify a custom XML namespace. It defaults to the standard MathML namespace (`http://www.w3.org/1998/Math/MathML`). Pass an empty string if you don't want a namespace attribute. Again, **named arguments are recommended**.
 
 ```php
-// Positional arguments
-$mathml = Converter::convert($latex, 'inline', 'http://custom-namespace.org');
-
-// Named argument
+// Recommended: Named argument
 $mathml = Converter::convert($latex, xmlns: 'http://custom-namespace.org');
+
+// Also possible: Positional arguments
+$mathml = Converter::convert($latex, 'inline', 'http://custom-namespace.org');
 ```
 
 ### Integration with DOMDocument
