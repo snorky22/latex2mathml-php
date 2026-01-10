@@ -9,7 +9,7 @@ class Tokenizer
     public static function tokenize(string $latex_string, bool $skip_comments = true): array
     {
         $units_regex = implode('|', self::UNITS);
-        $pattern = "/(%[^\\n]+)|(a-zA-Z)|([_^])(\\d)|(-?\\d+(?:\\.\\d+)?\\s*(?:{$units_regex}))|(\\d+(?:\\.\\d+)?)|(\\.\\d*)|(\\\\[\\\\\\[\\]{} \\s!,:>;|_%#$&])|(\\\\(?:begin|end)\\s*\\{[a-zA-Z]+\\*?\\})|(\\\\operatorname\\s*\\{[a-zA-Z\\s*]+\\*?\\s*\\})|(\\\\(?:cite|color|fbox|hbox|href|label|mbox|ref|style|tag|text|textbf|textit|textrm|textsf|texttt))\\s*\\{([^\\}]*)\\}|(\\\\[cdt]?frac)\\s*([.\\d])\\s*([.\\d])?|(\\\\math[a-z]+)(\\{)([a-zA-Z])(\\})|(\\\\[a-zA-Z]+)|(\\S)/x";
+        $pattern = "/(%[^\\n]+)|([a-zA-Z])|([_^])(\\d)|(-?\\d+(?:\\.\\d+)?\\s*(?:{$units_regex}))|(\\d+(?:\\.\\d+)?)|(\\.\\d*)|(\\\\[\\\\\\[\\]{} \\s!,:>;|_%#$&])|(\\\\(?:begin|end)\\s*\\{[a-zA-Z]+\\*?\\})|(\\\\operatorname\\s*\\{[a-zA-Z\\s*]+\\*?\\s*\\})|(\\\\(?:cite|color|fbox|hbox|href|label|mbox|ref|style|tag|text|textbf|textit|textrm|textsf|texttt))\\s*\\{([^\\}]*)\\}|(\\\\[cdt]?frac)\\s*([.\\d])\\s*([.\\d])?|(\\\\math[a-z]+)(\\{)([a-zA-Z])(\\})|(\\\\[a-zA-Z]+)|(\\S)/ux";
 
         preg_match_all($pattern, $latex_string, $matches, PREG_SET_ORDER);
 
