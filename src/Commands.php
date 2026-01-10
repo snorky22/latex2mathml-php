@@ -270,8 +270,12 @@ class Commands
     public const SIDESET = "\\sideset";
     public const LABEL = "\\label";
     public const TAG = "\\tag";
+    public const CITE = "\\cite";
+    public const REF = "\\ref";
     public const NOTAG = "\\notag";
     public const NONUMBER = "\\nonumber";
+
+    public const SPECIAL_CHAR = "\\specialChar";
 
     public const SKEW = "\\skew";
     public const NOT = "\\not";
@@ -305,6 +309,10 @@ class Commands
         self::GRAVE,
         self::HAT,
         self::HPHANTOM,
+        self::LABEL,
+        self::TAG,
+        self::CITE,
+        self::REF,
         self::MATHRING,
         self::MIT,
         self::MOD,
@@ -522,6 +530,11 @@ class Commands
             ],
             self::$STYLES,
             [
+                self::LABEL => ["mrow", []],
+                self::TAG => ["mrow", []],
+                self::CITE => ["mrow", []],
+                self::REF => ["mrow", []],
+                self::SPECIAL_CHAR => ["mi", []],
                 self::SQRT => ["msqrt", []],
                 self::ROOT => ["mroot", []],
                 self::HREF => ["mtext", []],

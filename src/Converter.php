@@ -32,10 +32,18 @@ class Converter
      */
     public static function convert(string $latex, string $display = "inline", string $xmlns = "http://www.w3.org/1998/Math/MathML"): string
     {
+        $latex = self::preprocess($latex);
         $dom = new DOMDocument();
         $math = self::convert_to_element($latex, $dom, $display, $xmlns);
         $dom->appendChild($math);
         return self::_convert($dom);
+    }
+
+    private static function preprocess(string $latex): string
+    {
+        return preg_replace_callback('/\\\\specialChar\s*\{(\d+)\}/', function ($matches) {
+            return mb_chr((int)$matches[1], 'UTF-8');
+        }, $latex);
     }
 
     /**
@@ -477,6 +485,18 @@ class Converter
             $arrow = $dom->createElement("mo");
             $arrow->nodeValue = ($command === Commands::XLEFTARROW) ? "&#x2190;" : "&#x2192;";
             $mstyle->appendChild($arrow);
+        } elseif ($command === Commands::LABEL) {
+            $element->setAttribute("id", $node->children[0]->token);
+            return;
+        } elseif ($command === Commands::TAG) {
+            $element->setAttribute("id", $node->children[0]->token);
+            return;
+        } elseif ($command === Commands::CITE) {
+            $element->nodeValue = "[" . $node->children[0]->token . "]";
+            return;
+        } elseif ($command === Commands::REF) {
+            $element->nodeValue = $node->children[0]->token;
+            return;
         } elseif ($node->text !== null) {
             if ($command === Commands::MIDDLE) {
                 $element->nodeValue = "&#x" . SymbolsParser::convert_symbol($node->text) . ";";
@@ -516,7 +536,7 @@ class Converter
 
         if ($node->children !== null) {
             $_parent = $element;
-            if (in_array($command, [Commands::LEFT, Commands::MOD, Commands::PMOD])) {
+            if (in_array($command, [Commands::LEFT, Commands::MOD, Commands::PMOD, Commands::LABEL, Commands::TAG, Commands::CITE, Commands::REF])) {
                 $_parent = $parent;
             }
             if (in_array($command, Commands::MATRICES)) {
