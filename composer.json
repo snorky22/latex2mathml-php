@@ -1,7 +1,7 @@
 {
     "name": "latex2mathml/latex2mathml-php",
     "description": "Pure PHP library for LaTeX to MathML conversion",
-    "version": "1.2.0",
+    "version": "1.2.2",
     "type": "library",
     "license": "MIT",
     "authors": [
