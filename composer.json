@@ -3,6 +3,7 @@
     "description": "Pure PHP library for LaTeX to MathML conversion",
     "type": "library",
     "license": "MIT",
+    "version": "1.3.0",
     "authors": [
         {
             "name": "snorky22",
