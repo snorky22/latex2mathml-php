@@ -1,3 +1,19 @@
+2026-01-11 18:35
+
+- Verified and confirmed that the refined MathML conversion correctly handles complex LaTeX examples (e.g., nested indices in `align` environments) without creating empty placeholders.
+
+2026-01-11 18:30
+
+- Further refined MathML output to eliminate empty placeholders in Word:
+    - `align`-like environments: Replaced injected empty `<mi/>` tags with `<mspace width="0em"/>` in even-numbered columns used for alignment.
+    - Script Optimization: Updated script conversion logic to detect empty bases. When a base is empty (e.g., in `{_{00}}`), the converter now skips the `msub`/`msup`/`msubsup` wrapper for that specific node and directly processes the indices. This avoids nesting scripts with empty bases, which Word often renders as placeholders.
+
+2026-01-11 18:25
+
+- Fixed empty placeholders in MathML output (e.g. in Word):
+    - Arrows (`\xrightarrow` and `\xleftarrow`): Now skip empty mandatory/optional arguments and simplify to a single stretchy `mo` if no arguments are provided, instead of creating `mover`/`munderover` with empty components.
+    - Empty Bases/Indices: Now use `<mspace width="0em"/>` instead of an empty `<mi/>` for nodes with an empty token. This provides explicit but invisible content that prevents many processors from rendering empty placeholders.
+
 2026-01-11 17:55
 
 - Fixed XML validity in MathML output:

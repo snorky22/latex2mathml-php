@@ -166,9 +166,11 @@ class Converter
 
                 $mtr->appendChild($mtd);
 
-                // Empty mi injection for align-like environments
+                // Empty mspace injection for align-like environments
                 if (in_array($command, [Commands::SPLIT, Commands::ALIGN, Commands::ALIGN_STAR, Commands::ALIGNED, Commands::ALIGNED_STAR, Commands::FLALIGN, Commands::FLALIGN_STAR, Commands::ALIGNAT, Commands::ALIGNAT_STAR, Commands::ALIGNEDAT, Commands::ALIGNEDAT_STAR]) && ($i + 1) % 2 === 0) {
-                    $mtd->appendChild($dom->createElement("mi"));
+                    $mspace = $dom->createElement("mspace");
+                    $mspace->setAttribute("width", "0em");
+                    $mtd->appendChild($mspace);
                 }
 
                 if (isset($rowNodes[$i])) {
@@ -240,33 +242,49 @@ class Converter
                 break;
             } elseif (isset(Commands::$CONVERSION_MAP[$token]) || $token === Commands::MOD || $token === Commands::PMOD) {
                 if ($token === Commands::SUBSUP && $node->children !== null && count($node->children) >= 3) {
-                    $tag = "msubsup";
-                    if (in_array($node->modifier, [Commands::LIMITS, Commands::OVERBRACE, Commands::UNDERBRACE]) || $node->children[0]->token === Commands::GCD) {
-                        $tag = "munderover";
+                    $base = $node->children[0];
+                    if ($base->token === "" && empty($base->children)) {
+                        self::_convert_group([$node->children[1]], $parent, $dom, $_font);
+                        self::_convert_group([$node->children[2]], $parent, $dom, $_font);
+                    } else {
+                        $tag = "msubsup";
+                        if (in_array($node->modifier, [Commands::LIMITS, Commands::OVERBRACE, Commands::UNDERBRACE]) || $node->children[0]->token === Commands::GCD) {
+                            $tag = "munderover";
+                        }
+                        $element = $dom->createElement($tag);
+                        $parent->appendChild($element);
+                        self::_convert_group([$node->children[0]], $element, $dom, $_font);
+                        self::_convert_group([$node->children[1]], $element, $dom, $_font);
+                        self::_convert_group([$node->children[2]], $element, $dom, $_font);
                     }
-                    $element = $dom->createElement($tag);
-                    $parent->appendChild($element);
-                    self::_convert_group([$node->children[0]], $element, $dom, $_font);
-                    self::_convert_group([$node->children[1]], $element, $dom, $_font);
-                    self::_convert_group([$node->children[2]], $element, $dom, $_font);
                 } elseif ($token === Commands::SUBSCRIPT && $node->children !== null && count($node->children) >= 2) {
-                    $tag = "msub";
-                    if (in_array($node->modifier, [Commands::LIMITS, Commands::UNDERBRACE])) {
-                        $tag = "munder";
+                    $base = $node->children[0];
+                    if ($base->token === "" && empty($base->children)) {
+                        self::_convert_group([$node->children[1]], $parent, $dom, $_font);
+                    } else {
+                        $tag = "msub";
+                        if (in_array($node->modifier, [Commands::LIMITS, Commands::UNDERBRACE])) {
+                            $tag = "munder";
+                        }
+                        $element = $dom->createElement($tag);
+                        $parent->appendChild($element);
+                        self::_convert_group([$node->children[0]], $element, $dom, $_font);
+                        self::_convert_group([$node->children[1]], $element, $dom, $_font);
                     }
-                    $element = $dom->createElement($tag);
-                    $parent->appendChild($element);
-                    self::_convert_group([$node->children[0]], $element, $dom, $_font);
-                    self::_convert_group([$node->children[1]], $element, $dom, $_font);
                 } elseif ($token === Commands::SUPERSCRIPT && $node->children !== null && count($node->children) >= 2) {
-                    $tag = "msup";
-                    if (in_array($node->modifier, [Commands::LIMITS, Commands::OVERBRACE])) {
-                        $tag = "mover";
+                    $base = $node->children[0];
+                    if ($base->token === "" && empty($base->children)) {
+                        self::_convert_group([$node->children[1]], $parent, $dom, $_font);
+                    } else {
+                        $tag = "msup";
+                        if (in_array($node->modifier, [Commands::LIMITS, Commands::OVERBRACE])) {
+                            $tag = "mover";
+                        }
+                        $element = $dom->createElement($tag);
+                        $parent->appendChild($element);
+                        self::_convert_group([$node->children[0]], $element, $dom, $_font);
+                        self::_convert_group([$node->children[1]], $element, $dom, $_font);
                     }
-                    $element = $dom->createElement($tag);
-                    $parent->appendChild($element);
-                    self::_convert_group([$node->children[0]], $element, $dom, $_font);
-                    self::_convert_group([$node->children[1]], $element, $dom, $_font);
                 } else {
                     self::_convert_command($node, $parent, $dom, $_font);
                 }
@@ -456,8 +474,27 @@ class Converter
             $tag = "munder";
         } elseif ($command === Commands::SUBSUP && in_array($modifier, [Commands::LIMITS, Commands::OVERBRACE, Commands::UNDERBRACE])) {
             $tag = "munderover";
-        } elseif (in_array($command, [Commands::XLEFTARROW, Commands::XRIGHTARROW]) && $node->children !== null && count($node->children) === 2) {
-            $tag = "munderover";
+        } elseif (in_array($command, [Commands::XLEFTARROW, Commands::XRIGHTARROW])) {
+            $has_bottom = false;
+            $has_top = false;
+            if ($node->children !== null) {
+                if (count($node->children) === 1) {
+                    $has_top = !($node->children[0]->token === Commands::BRACES && empty($node->children[0]->children));
+                } elseif (count($node->children) === 2) {
+                    $has_bottom = !($node->children[0]->token === Commands::BRACES && empty($node->children[0]->children));
+                    $has_top = !($node->children[1]->token === Commands::BRACES && empty($node->children[1]->children));
+                }
+            }
+            if ($has_bottom && $has_top) {
+                $tag = "munderover";
+            } elseif ($has_bottom) {
+                $tag = "munder";
+            } elseif ($has_top) {
+                $tag = "mover";
+            } else {
+                $tag = "mo";
+                $attributes["stretchy"] = "true";
+            }
         }
 
         $element = $dom->createElement($tag);
@@ -476,12 +513,16 @@ class Converter
         } elseif ($command === Commands::BMOD) {
             $element->nodeValue = "mod";
         } elseif (in_array($command, [Commands::XLEFTARROW, Commands::XRIGHTARROW])) {
-            $mstyle = $dom->createElement("mstyle");
-            $mstyle->setAttribute("scriptlevel", "0");
-            $element->appendChild($mstyle);
-            $arrow = $dom->createElement("mo");
-            $arrow->nodeValue = ($command === Commands::XLEFTARROW) ? "&#x2190;" : "&#x2192;";
-            $mstyle->appendChild($arrow);
+            if ($tag === "mo") {
+                $element->nodeValue = ($command === Commands::XLEFTARROW) ? "&#x2190;" : "&#x2192;";
+            } else {
+                $mstyle = $dom->createElement("mstyle");
+                $mstyle->setAttribute("scriptlevel", "0");
+                $element->appendChild($mstyle);
+                $arrow = $dom->createElement("mo");
+                $arrow->nodeValue = ($command === Commands::XLEFTARROW) ? "&#x2190;" : "&#x2192;";
+                $mstyle->appendChild($arrow);
+            }
         } elseif ($command === Commands::LABEL) {
             $element->setAttribute("id", $node->children[0]->token);
             return;
@@ -579,6 +620,9 @@ class Converter
                 self::_convert_group([$new_node], $_parent, $dom, $font);
             } elseif (in_array($command, [Commands::XLEFTARROW, Commands::XRIGHTARROW])) {
                 foreach ($node->children as $child) {
+                    if ($child->token === Commands::BRACES && empty($child->children)) {
+                        continue;
+                    }
                     $padded = $dom->createElement("mpadded");
                     $padded->setAttribute("width", "+0.833em");
                     $padded->setAttribute("lspace", "0.556em");
@@ -798,6 +842,10 @@ class Converter
             self::_set_font($mi_t, "mi", $font);
             self::_set_font($mi_e, "mi", $font);
             self::_set_font($mi_x, "mi", $font);
+        } elseif ($token === "") {
+            $element = $dom->createElement("mspace");
+            $element->setAttribute("width", "0em");
+            $parent->appendChild($element);
         } elseif (str_starts_with($token, Commands::OPERATORNAME)) {
             $name = substr($token, 14, -1);
             $element = $dom->createElement("mo");
