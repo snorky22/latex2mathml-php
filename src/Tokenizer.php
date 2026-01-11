@@ -33,7 +33,7 @@ class Tokenizer
                 $full_math = implode('', array_slice($filtered_groups, 0, 4));
                 $symbol = SymbolsParser::convert_symbol($full_math);
                 if ($symbol) {
-                    $tokens[] = "&#x{$symbol};";
+                    $tokens[] = mb_chr(hexdec($symbol), 'UTF-8');
                     continue;
                 }
             }

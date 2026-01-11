@@ -41,9 +41,13 @@ class Converter
 
     private static function preprocess(string $latex): string
     {
-        return preg_replace_callback('/\\\\specialChar\s*\{(\d+)\}/', function ($matches) {
+        $latex = preg_replace_callback('/\\\\specialChar\s*\{(\d+)\}/', function ($matches) {
             return mb_chr((int)$matches[1], 'UTF-8');
         }, $latex);
+
+        $latex = html_entity_decode($latex, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        // Handle double-escaped entities if they exist (common in some HTML exporters)
+        return html_entity_decode($latex, ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
 
     /**
@@ -411,7 +415,7 @@ class Converter
             $parent->appendChild($mrow);
             $parent = $mrow;
             $lbrace = $dom->createElement("mo");
-            $lbrace->nodeValue = "&#x" . SymbolsParser::convert_symbol(Commands::LBRACE) . ";";
+            $lbrace->nodeValue = mb_chr(hexdec(SymbolsParser::convert_symbol(Commands::LBRACE)), 'UTF-8');
             $lbrace->setAttribute("stretchy", "true");
             $lbrace->setAttribute("fence", "true");
             $lbrace->setAttribute("form", "prefix");
@@ -514,13 +518,13 @@ class Converter
             $element->nodeValue = "mod";
         } elseif (in_array($command, [Commands::XLEFTARROW, Commands::XRIGHTARROW])) {
             if ($tag === "mo") {
-                $element->nodeValue = ($command === Commands::XLEFTARROW) ? "&#x2190;" : "&#x2192;";
+                $element->nodeValue = ($command === Commands::XLEFTARROW) ? mb_chr(0x2190, 'UTF-8') : mb_chr(0x2192, 'UTF-8');
             } else {
                 $mstyle = $dom->createElement("mstyle");
                 $mstyle->setAttribute("scriptlevel", "0");
                 $element->appendChild($mstyle);
                 $arrow = $dom->createElement("mo");
-                $arrow->nodeValue = ($command === Commands::XLEFTARROW) ? "&#x2190;" : "&#x2192;";
+                $arrow->nodeValue = ($command === Commands::XLEFTARROW) ? mb_chr(0x2190, 'UTF-8') : mb_chr(0x2192, 'UTF-8');
                 $mstyle->appendChild($arrow);
             }
         } elseif ($command === Commands::LABEL) {
@@ -537,7 +541,7 @@ class Converter
             return;
         } elseif ($node->text !== null) {
             if ($command === Commands::MIDDLE) {
-                $element->nodeValue = "&#x" . SymbolsParser::convert_symbol($node->text) . ";";
+                $element->nodeValue = mb_chr(hexdec(SymbolsParser::convert_symbol($node->text)), 'UTF-8');
             } elseif ($command === Commands::HBOX) {
                 $mtext = $element;
                 foreach (self::separate_by_mode($node->text) as [$text, $mode]) {
@@ -547,7 +551,7 @@ class Converter
                             foreach ($attributes as $k => $v) $mtext->setAttribute($k, $v);
                             $parent->appendChild($mtext);
                         }
-                        $mtext->nodeValue = str_replace(" ", "&#x000A0;", $text);
+                        $mtext->nodeValue = str_replace(" ", mb_chr(0x000A0, 'UTF-8'), $text);
                         self::_set_font($mtext, "mtext", $font);
                         $mtext = null;
                     } else {
@@ -562,13 +566,13 @@ class Converter
                     $target = $dom->createElement("mtext");
                     $element->appendChild($target);
                 }
-                $target->nodeValue = str_replace(" ", "&#x000A0;", $node->text);
+                $target->nodeValue = str_replace(" ", mb_chr(0x000A0, 'UTF-8'), $node->text);
                 self::_set_font($target, "mtext", $font);
             }
         } elseif ($node->delimiter !== null && !in_array($command, [Commands::FRAC, Commands::GENFRAC])) {
             if ($node->delimiter !== ".") {
                 $symbol = SymbolsParser::convert_symbol($node->delimiter);
-                $element->nodeValue = ($symbol === null) ? $node->delimiter : "&#x$symbol;";
+                $element->nodeValue = ($symbol === null) ? $node->delimiter : mb_chr(hexdec($symbol), 'UTF-8');
             }
         }
 
@@ -660,7 +664,7 @@ class Converter
     {
         $code_point = SymbolsParser::convert_symbol($command);
         $mo = $dom->createElement("mo");
-        $mo->nodeValue = $code_point ? "&#x$code_point;" : $command;
+        $mo->nodeValue = $code_point ? mb_chr(hexdec($code_point), 'UTF-8') : $command;
         foreach ($attributes as $k => $v) {
             $mo->setAttribute($k, $v);
         }
@@ -733,7 +737,7 @@ class Converter
             self::_set_font($element, "mn", $font);
         } elseif (in_array($token, self::OPERATORS)) {
             $element = $dom->createElement("mo");
-            $element->nodeValue = ($symbol === null) ? $token : "&#x$symbol;";
+            $element->nodeValue = ($symbol === null) ? $token : mb_chr(hexdec($symbol), 'UTF-8');
             foreach ($attributes as $k => $v) $element->setAttribute($k, $v);
             if ($token === "\\|") $element->setAttribute("fence", "false");
             if ($token === "\\smallint") $element->setAttribute("largeop", "false");
@@ -746,13 +750,13 @@ class Converter
             $parent->appendChild($element);
         } elseif (($symbol && ( (hexdec($symbol) >= hexdec("2200") && hexdec($symbol) <= hexdec("22FF")) || (hexdec($symbol) >= hexdec("2190") && hexdec($symbol) <= hexdec("21FF")) )) || $symbol === ".") {
             $element = $dom->createElement("mo");
-            $element->nodeValue = "&#x$symbol;";
+            $element->nodeValue = ($symbol === ".") ? "." : mb_chr(hexdec($symbol), 'UTF-8');
             foreach ($attributes as $k => $v) $element->setAttribute($k, $v);
             $parent->appendChild($element);
             self::_set_font($element, "mo", $font);
         } elseif (in_array($token, ["\\ ", "~", Commands::NOBREAKSPACE, Commands::SPACE])) {
             $element = $dom->createElement("mtext");
-            $element->nodeValue = "&#x000A0;";
+            $element->nodeValue = mb_chr(0x000A0, 'UTF-8');
             foreach ($attributes as $k => $v) $element->setAttribute($k, $v);
             $parent->appendChild($element);
             self::_set_font($element, "mtext", $font);
@@ -761,18 +765,18 @@ class Converter
             $mpadded->setAttribute("width", "0");
             $parent->appendChild($mpadded);
             $mtext = $dom->createElement("mtext");
-            $mtext->nodeValue = "&#x029F8;";
+            $mtext->nodeValue = mb_chr(0x029F8, 'UTF-8');
             $mpadded->appendChild($mtext);
         } elseif (in_array($token, [Commands::DETERMINANT, Commands::GCD, Commands::INTOP, Commands::INJLIM, Commands::LIMINF, Commands::LIMSUP, Commands::PR, Commands::PROJLIM])) {
             $element = $dom->createElement("mo");
             $element->setAttribute("movablelimits", "true");
             foreach ($attributes as $k => $v) $element->setAttribute($k, $v);
             $texts = [
-                Commands::INJLIM => "inj&#x02006;lim",
-                Commands::INTOP => "&#x0222B;",
-                Commands::LIMINF => "lim&#x02006;inf",
-                Commands::LIMSUP => "lim&#x02006;sup",
-                Commands::PROJLIM => "proj&#x02006;lim",
+                Commands::INJLIM => "inj" . mb_chr(0x2006, 'UTF-8') . "lim",
+                Commands::INTOP => mb_chr(0x222B, 'UTF-8'),
+                Commands::LIMINF => "lim" . mb_chr(0x2006, 'UTF-8') . "inf",
+                Commands::LIMSUP => "lim" . mb_chr(0x2006, 'UTF-8') . "sup",
+                Commands::PROJLIM => "proj" . mb_chr(0x2006, 'UTF-8') . "lim",
             ];
             $element->nodeValue = $texts[$token] ?? substr($token, 1);
             $parent->appendChild($element);
@@ -781,7 +785,7 @@ class Converter
             $mrow = $dom->createElement("mrow");
             foreach ($attributes as $k => $v) $mrow->setAttribute($k, $v);
             $parent->appendChild($mrow);
-            foreach (["&#x0222B;", "&#x022EF;", "&#x0222B;"] as $s) {
+            foreach ([mb_chr(0x222B, 'UTF-8'), mb_chr(0x22EF, 'UTF-8'), mb_chr(0x222B, 'UTF-8')] as $s) {
                 $mo = $dom->createElement("mo");
                 $mo->nodeValue = $s;
                 $mrow->appendChild($mo);
@@ -856,7 +860,7 @@ class Converter
             $element = $dom->createElement("mi");
             foreach ($attributes as $k => $v) $element->setAttribute($k, $v);
             if ($symbol) {
-                $element->nodeValue = "&#x$symbol;";
+                $element->nodeValue = mb_chr(hexdec($symbol), 'UTF-8');
             } elseif (in_array($token, Commands::FUNCTIONS)) {
                 $element->nodeValue = substr($token, 1);
             } else {

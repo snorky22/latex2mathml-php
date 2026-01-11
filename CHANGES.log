@@ -1,3 +1,15 @@
+2026-01-11 19:15
+
+- Fixed "persistent HTML entities" issue (e.g., `&amp;#x1D4A9;`) in MathML output by using raw UTF-8 characters instead of literal hex entity strings when setting `DOMElement` node values.
+- Updated `Converter` and `Tokenizer` to use `mb_chr` for mathematical symbols and special characters. This prevents `DOMDocument::saveXML` from double-escaping the ampersand in manually constructed entities.
+- Verified that `\mathcal` and other mathematical symbols now produce raw UTF-8 characters in the output, which is better supported by MS Word and other MathML processors.
+
+2026-01-11 19:10
+
+- Re-implemented HTML entity decoding (both named and decimal) in `Converter::preprocess`. 
+- Added support for double-escaped entities (e.g., `&amp;#62;` which becomes `&#62;` then `>`), addressing issues with certain HTML source generators.
+- Verified that entities like `&alpha;` or `&#62;` are converted to their UTF-8 equivalents before being processed.
+
 2026-01-11 18:35
 
 - Verified and confirmed that the refined MathML conversion correctly handles complex LaTeX examples (e.g., nested indices in `align` environments) without creating empty placeholders.

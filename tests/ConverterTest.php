@@ -58,6 +58,14 @@ class ConverterTest extends TestCase
             'special-char' => [
                 '\specialChar{65} \specialChar{38} \specialChar{60} \specialChar{62}',
                 ['<mi>A</mi>', '<mi>&amp;</mi>', '<mo>&lt;</mo>', '<mo>&gt;</mo>']
+            ],
+            'html-entities' => [
+                'x &#62; y &gt; z &alpha; &amp; &quot; &amp;#62;',
+                ['<mi>x</mi>', '<mo>&gt;</mo>', '<mi>y</mi>', '<mo>&gt;</mo>', '<mi>z</mi>', '<mi>α</mi>', '<mi>&amp;</mi>', '<mi>"</mi>', '<mo>&gt;</mo>']
+            ],
+            'mathcal' => [
+                '\mathcal{N} \mathcal{G} \mathcal{B}',
+                ['<mi>𝒩</mi>', '<mi>𝒢</mi>', '<mi>ℬ</mi>']
             ]
         ];
     }
