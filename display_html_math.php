@@ -1,0 +1,116 @@
+<?php
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+use Latex2MathML\Converter;
+
+// 1. Find the first .html file in the tests directory
+$testsDir = __DIR__ . '/tests';
+$htmlFiles = glob($testsDir . '/*.html');
+
+if (empty($htmlFiles)) {
+    die("No .html files found in $testsDir");
+}
+
+$htmlFile = $htmlFiles[0];
+$content = file_get_contents($htmlFile);
+
+// 2. Extract math contents delimited by \[ \] or \( \) or LaTeX environments
+// We use a regex that matches \[...\] and environments first to avoid matching \(...\) inside them
+// Pattern explanation:
+// (\\\[.*?\\\]) matches \[ ... \] expressions
+// (\\begin\{(?:equation|eqnarray|multline|align|gather|flalign|alignat|split|aligned)\*?\} .*? \\end\{(?:\g<2>)\}) matches environments
+// (\\\(.*?\\\)) matches \( ... \) expressions
+// s modifier allows . to match newlines
+$environments = [
+    'equation', 'equation*',
+    'eqnarray', 'eqnarray*',
+    'multline', 'multline*',
+    'align', 'align*',
+    'aligned', 'aligned*',
+    'gather', 'gather*',
+    'flalign', 'flalign*',
+    'alignat', 'alignat*',
+    'split',
+];
+$envList = implode('|', array_map('preg_quote', $environments));
+// Note: we need to escape backslashes in the regex string. 
+// \( becomes \\\(
+// \) becomes \\\)
+// \[ becomes \\\[
+// \] becomes \\\]
+$pattern = '/(\\\\\[.*?\\\\\]|\\\\begin\{(?<env>' . $envList . ')\}.*?\\\\end\{(?P=env)\}|\\\\\(.*?\\\\\))/s';
+preg_match_all($pattern, $content, $matches);
+
+$expressions = $matches[0];
+$results = [];
+
+foreach ($expressions as $expr) {
+    if (str_starts_with($expr, '\[')) {
+        $latex = trim(substr($expr, 2, -2));
+        $display = 'block';
+    } elseif (str_starts_with($expr, '\(')) {
+        $latex = trim(substr($expr, 2, -2));
+        $display = 'inline';
+    } else {
+        // It's a LaTeX environment
+        $latex = $expr;
+        $display = 'block';
+    }
+
+    try {
+        $mathml = Converter::convert($latex, display: $display);
+        $results[] = [
+            'latex' => $expr,
+            'mathml' => $mathml
+        ];
+    } catch (\Exception $e) {
+        $results[] = [
+            'latex' => $expr,
+            'error' => $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine()
+        ];
+    }
+}
+
+// 3. Output as a web page
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LaTeX to MathML Conversion (HTML source)</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .result-item { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+        .latex { background: #f4f4f4; padding: 5px; font-family: monospace; }
+        .mathml { margin-top: 10px; background: #fff; border: 1px inset #eee; padding: 10px; overflow-x: auto; }
+        .error { color: red; font-weight: bold; }
+        h1 { border-bottom: 2px solid #333; }
+        h2 { font-size: 1.1em; color: #555; }
+    </style>
+</head>
+<body>
+    <h1>LaTeX to MathML Conversion (HTML source)</h1>
+    <p>Reading file: <code><?php echo htmlspecialchars(basename($htmlFile)); ?></code></p>
+
+    <?php if (empty($results)): ?>
+        <p>No LaTeX expressions found in the file.</p>
+    <?php else: ?>
+        <?php foreach ($results as $item): ?>
+            <div class="result-item">
+                <h2>LaTeX Input:</h2>
+                <div class="latex"><?php echo htmlspecialchars($item['latex']); ?></div>
+                
+                <h2>MathML Output:</h2>
+                <div class="mathml">
+                    <?php if (isset($item['error'])): ?>
+                        <div class="error">Error: <?php echo htmlspecialchars($item['error']); ?></div>
+                    <?php else: ?>
+                        <?php echo $item['mathml']; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
+</body>
+</html>

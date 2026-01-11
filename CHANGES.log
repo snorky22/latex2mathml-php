@@ -1,0 +1,10 @@
+2026-01-11 16:45
+
+- Created `display_html_math.php`: A new script based on `display_math.php` that:
+    - Processes the first `.html` file found in the `tests/` directory.
+    - Uses `\(` and `\)` as delimiters for inline math.
+    - Uses `\[` and `\]` as delimiters for display math.
+    - Maintains support for standard LaTeX environments (e.g., `\begin{equation}`).
+    - Uses updated regex for extracting math with the new delimiters.
+- Created `tests/test_math.html`: A sample HTML file to test the new script, containing inline and display math using the new delimiters.
+- Verified the implementation by running `php display_html_math.php`.
