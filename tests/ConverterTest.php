@@ -57,7 +57,7 @@ class ConverterTest extends TestCase
             ],
             'special-char' => [
                 '\specialChar{65} \specialChar{38} \specialChar{60} \specialChar{62}',
-                ['<mi>A</mi>', '<mi>&</mi>', '<mo><</mo>', '<mo>></mo>']
+                ['<mi>A</mi>', '<mi>&amp;</mi>', '<mo>&lt;</mo>', '<mo>&gt;</mo>']
             ]
         ];
     }

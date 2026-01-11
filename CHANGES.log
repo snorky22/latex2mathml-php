@@ -1,3 +1,23 @@
+2026-01-11 17:55
+
+- Fixed XML validity in MathML output:
+    - Removed `htmlspecialchars_decode` from `Converter::_convert` to ensure that characters like `<`, `>`, and `&` remain correctly escaped as XML entities (`&lt;`, `&gt;`, `&amp;`).
+    - This fixes the "StartTag: invalid element name" and other XML parsing errors in post-processors.
+    - Updated `tests/ConverterTest.php` to expect escaped XML entities.
+
+2026-01-11 17:45
+
+- Improved `check_xml_errors.php`:
+    - Now parses the input `.txt` file for individual `<math>` expressions instead of validating the whole file.
+    - Outputs a detailed HTML report instead of plain text.
+    - Includes statistics (total, valid, invalid counts).
+    - Continues processing even if an error is found.
+    - Provides specific help/advice for common XML errors (e.g., unescaped characters, tag mismatches).
+
+2026-01-11 17:40
+
+- Created `check_xml_errors.php`: A utility script to validate the first `.txt` file in the `tests/` directory as XML and report any parsing errors.
+
 2026-01-11 17:35
 
 - Fixed conversion error for display math containing double brackets `[[...]]` inside LaTeX environments like `equation`.

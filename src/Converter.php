@@ -72,10 +72,7 @@ class Converter
     private static function _convert(DOMDocument $dom): string
     {
         $dom->formatOutput = false;
-        $xml = $dom->saveXML($dom->documentElement);
-        // Python's unescape(tostring(tree, encoding="unicode"))
-        // actually keeps some entities but unescapes standard ones.
-        return htmlspecialchars_decode($xml, ENT_QUOTES | ENT_XML1);
+        return $dom->saveXML($dom->documentElement);
     }
 
     private static function _convert_matrix(array $nodes, DOMElement $parent, string $command, DOMDocument $dom, ?string $alignment = null): void
