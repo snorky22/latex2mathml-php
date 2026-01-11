@@ -478,8 +478,13 @@ class Walker
             array_pop($children);
         }
         $alignment = "";
+        $environments_with_optional_alignment = [
+            'array',
+            'matrix*', 'pmatrix*', 'bmatrix*', 'Bmatrix*', 'vmatrix*', 'Vmatrix*',
+            'aligned', 'gathered'
+        ];
 
-        if (!empty($children) && $children[0]->token === Commands::OPENING_BRACKET) {
+        if (in_array($environment, $environments_with_optional_alignment) && !empty($children) && $children[0]->token === Commands::OPENING_BRACKET) {
             array_shift($children);
             while (!empty($children)) {
                 $c = array_shift($children);
