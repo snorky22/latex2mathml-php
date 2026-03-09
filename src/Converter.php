@@ -457,12 +457,6 @@ class Converter
             $attributes = array_merge($attributes, $node->attributes);
         }
 
-        if ($command === Commands::LEFT) {
-            $mrow = $dom->createElement("mrow");
-            $parent->appendChild($mrow);
-            $parent = $mrow;
-        }
-
         self::_append_prefix_element($node, $parent, $dom);
 
         [$alignment, $column_lines] = self::_get_alignment_and_column_lines($node->alignment);
@@ -501,11 +495,30 @@ class Converter
             }
         }
 
-        $element = $dom->createElement($tag);
-        foreach ($attributes as $k => $v) {
-            $element->setAttribute($k, $v);
+        // Special handling for \left command
+        if ($command === Commands::LEFT) {
+            $mrow = $dom->createElement("mrow");
+            $parent->appendChild($mrow);
+
+            // Render the left delimiter with stretchy="true"
+            if ($node->delimiter !== null && $node->delimiter !== ".") {
+                $symbol = SymbolsParser::convert_symbol($node->delimiter);
+                $mo = $dom->createElement("mo");
+                $mo->nodeValue = ($symbol === null) ? $node->delimiter : mb_chr(hexdec($symbol), 'UTF-8');
+                $mo->setAttribute("stretchy", "true");
+                $mo->setAttribute("fence", "true");
+                $mo->setAttribute("form", "prefix");
+                $mrow->appendChild($mo);
+            }
+
+            $element = $mrow; // Use mrow as the parent element for children
+        } else {
+            $element = $dom->createElement($tag);
+            foreach ($attributes as $k => $v) {
+                $element->setAttribute($k, $v);
+            }
+            $parent->appendChild($element);
         }
-        $parent->appendChild($element);
 
         if (in_array($command, Commands::LIMIT)) {
             $element->nodeValue = substr($command, 1);
@@ -540,8 +553,9 @@ class Converter
             $element->nodeValue = $node->children[0]->token;
             return;
         } elseif ($node->text !== null) {
-            if ($command === Commands::MIDDLE) {
-                $element->nodeValue = mb_chr(hexdec(SymbolsParser::convert_symbol($node->text)), 'UTF-8');
+            if ($command === Commands::MIDDLE || isset(Commands::$BIG[$command]) || isset(Commands::$BIG_OPEN_CLOSE[$command])) {
+                $symbol = SymbolsParser::convert_symbol($node->text);
+                $element->nodeValue = ($symbol === null) ? $node->text : mb_chr(hexdec($symbol), 'UTF-8');
             } elseif ($command === Commands::HBOX) {
                 $mtext = $element;
                 foreach (self::separate_by_mode($node->text) as [$text, $mode]) {
@@ -569,7 +583,7 @@ class Converter
                 $target->nodeValue = str_replace(" ", mb_chr(0x000A0, 'UTF-8'), $node->text);
                 self::_set_font($target, "mtext", $font);
             }
-        } elseif ($node->delimiter !== null && !in_array($command, [Commands::FRAC, Commands::GENFRAC])) {
+        } elseif ($node->delimiter !== null && !in_array($command, [Commands::FRAC, Commands::GENFRAC, Commands::LEFT])) {
             if ($node->delimiter !== ".") {
                 $symbol = SymbolsParser::convert_symbol($node->delimiter);
                 $element->nodeValue = ($symbol === null) ? $node->delimiter : mb_chr(hexdec($symbol), 'UTF-8');
@@ -578,7 +592,7 @@ class Converter
 
         if ($node->children !== null) {
             $_parent = $element;
-            if (in_array($command, [Commands::LEFT, Commands::MOD, Commands::PMOD, Commands::LABEL, Commands::TAG, Commands::CITE, Commands::REF])) {
+            if (in_array($command, [Commands::MOD, Commands::PMOD, Commands::LABEL, Commands::TAG, Commands::CITE, Commands::REF])) {
                 $_parent = $parent;
             }
             if (in_array($command, Commands::MATRICES)) {
