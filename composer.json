@@ -1,15 +1,15 @@
 {
     "name": "latex2mathml/latex2mathml-php",
-    "description": "Pure PHP library for LaTeX to MathML conversion",
+    "description": "Pure PHP library for LaTeX to MathML and OMML conversion",
     "type": "library",
     "license": "MIT",
     "authors": [
         {
             "name": "snorky22",
-            "email": "chaplais.francois@orange.fr"
+            "email": "chaplains.francois@orange.fr"
         }
     ],
-    "keywords": ["latex", "mathml", "converter", "php"],
+    "keywords": ["latex", "mathml", "omml", "converter", "php", "word"],
     "autoload": {
         "psr-4": {
             "Latex2MathML\\": "src/"
