@@ -39,6 +39,18 @@ class Converter
         return self::_convert($dom);
     }
 
+    /**
+     * Converts a LaTeX string to OMML (Office Math Markup Language) for Microsoft Word.
+     *
+     * @param string $latex The LaTeX expression to convert.
+     * @param string $display The display mode: "inline" (default) or "block".
+     * @return string The resulting OMML string.
+     */
+    public static function convertToOmml(string $latex, string $display = "inline"): string
+    {
+        return OmmlConverter::convert($latex, $display);
+    }
+
     private static function preprocess(string $latex): string
     {
         $latex = preg_replace_callback('/\\\\specialChar\s*\{(\d+)\}/', function ($matches) {
@@ -687,15 +699,11 @@ class Converter
 
     private static function _append_prefix_element(Node $node, DOMElement $parent, DOMDocument $dom): void
     {
-        $size = "2.047em";
-        if ($parent->getAttribute("displaystyle") === "false" || $node->token === Commands::TBINOM) {
-            $size = "1.2em";
-        }
         $token = $node->token;
         if (in_array($token, ["\\pmatrix", Commands::PMOD])) {
             self::_convert_and_append_command("\\lparen", $parent, $dom);
         } elseif (in_array($token, [Commands::BINOM, Commands::DBINOM, Commands::TBINOM])) {
-            self::_convert_and_append_command("\\lparen", $parent, $dom, ["minsize" => $size, "maxsize" => $size]);
+            self::_convert_and_append_command("\\lparen", $parent, $dom, ["stretchy" => "true", "symmetric" => "true"]);
         } elseif ($token === "\\bmatrix") {
             self::_convert_and_append_command("\\lbrack", $parent, $dom);
         } elseif ($token === "\\Bmatrix") {
@@ -705,21 +713,17 @@ class Converter
         } elseif ($token === "\\Vmatrix") {
             self::_convert_and_append_command("\\Vert", $parent, $dom);
         } elseif (in_array($token, [Commands::FRAC, Commands::GENFRAC]) && $node->delimiter !== null && $node->delimiter[0] !== ".") {
-            self::_convert_and_append_command($node->delimiter[0], parent: $parent, dom: $dom, attributes: ["minsize" => $size, "maxsize" => $size]);
+            self::_convert_and_append_command($node->delimiter[0], parent: $parent, dom: $dom, attributes: ["stretchy" => "true", "symmetric" => "true"]);
         }
     }
 
     private static function _append_postfix_element(Node $node, DOMElement $parent, DOMDocument $dom): void
     {
-        $size = "2.047em";
-        if ($parent->getAttribute("displaystyle") === "false" || $node->token === Commands::TBINOM) {
-            $size = "1.2em";
-        }
         $token = $node->token;
         if (in_array($token, ["\\pmatrix", Commands::PMOD])) {
             self::_convert_and_append_command("\\rparen", $parent, $dom);
         } elseif (in_array($token, [Commands::BINOM, Commands::DBINOM, Commands::TBINOM])) {
-            self::_convert_and_append_command("\\rparen", $parent, $dom, ["minsize" => $size, "maxsize" => $size]);
+            self::_convert_and_append_command("\\rparen", $parent, $dom, ["stretchy" => "true", "symmetric" => "true"]);
         } elseif ($token === "\\bmatrix") {
             self::_convert_and_append_command("\\rbrack", $parent, $dom);
         } elseif ($token === "\\Bmatrix") {
@@ -729,7 +733,7 @@ class Converter
         } elseif ($token === "\\Vmatrix") {
             self::_convert_and_append_command("\\Vert", $parent, $dom);
         } elseif (in_array($token, [Commands::FRAC, Commands::GENFRAC]) && $node->delimiter !== null && $node->delimiter[1] !== ".") {
-            self::_convert_and_append_command($node->delimiter[1], parent: $parent, dom: $dom, attributes: ["minsize" => $size, "maxsize" => $size]);
+            self::_convert_and_append_command($node->delimiter[1], parent: $parent, dom: $dom, attributes: ["stretchy" => "true", "symmetric" => "true"]);
         } elseif ($token === Commands::SKEW && $node->attributes !== null) {
             $mspace = $dom->createElement("mspace");
             $mspace->setAttribute("width", "-" . $node->attributes["width"]);

@@ -393,10 +393,10 @@ class Commands
         ]);
 
         self::$BIG = [
-            "\\Bigg" => ["mo", ["minsize" => "2.470em", "maxsize" => "2.470em"]],
-            "\\bigg" => ["mo", ["minsize" => "2.047em", "maxsize" => "2.047em"]],
-            "\\Big" => ["mo", ["minsize" => "1.623em", "maxsize" => "1.623em"]],
-            "\\big" => ["mo", ["minsize" => "1.2em", "maxsize" => "1.2em"]],
+            "\\Bigg" => ["mo", ["stretchy" => "true", "symmetric" => "true"]],
+            "\\bigg" => ["mo", ["stretchy" => "true", "symmetric" => "true"]],
+            "\\Big" => ["mo", ["stretchy" => "true", "symmetric" => "true"]],
+            "\\big" => ["mo", ["stretchy" => "true", "symmetric" => "true"]],
         ];
 
         self::$BIG_OPEN_CLOSE = [];
@@ -404,7 +404,7 @@ class Commands
             foreach (['l', 'm', 'r'] as $postfix) {
                 self::$BIG_OPEN_CLOSE[$command . $postfix] = [
                     $data[0],
-                    array_merge(["stretchy" => "true", "fence" => "true"], $data[1])
+                    array_merge(["fence" => "true"], $data[1])
                 ];
             }
         }
